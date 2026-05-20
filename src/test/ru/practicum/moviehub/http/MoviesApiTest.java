@@ -1,8 +1,7 @@
 package ru.practicum.moviehub.http;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +41,8 @@ public class MoviesApiTest {
     @AfterAll
     static void afterAll() {
         if (server != null) {
-            server.stop(); }
+            server.stop();
+        }
     }
 
     @Test
@@ -484,7 +484,11 @@ public class MoviesApiTest {
         assertEquals("application/json; charset=UTF-8", contentTypeHeaderValue,
                 "Content-Type должен содержать формат данных и кодировку");
 
-        String body = resp.body().trim();
-        assertEquals("{\"error\":\"Некорректный параметр запроса — \\u0027year\\u0027\"}", body);
+        String body = resp.body();
+        JsonObject jsonObject = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject jsonError = JsonParser
+                .parseString("{\"error\":\"Некорректный параметр запроса — 'year'\"}")
+                .getAsJsonObject();
+        assertEquals(jsonError, jsonObject);
     }
 }
