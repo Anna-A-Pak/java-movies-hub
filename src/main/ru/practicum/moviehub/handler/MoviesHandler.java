@@ -4,7 +4,6 @@ import com.google.gson.*;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import ru.practicum.moviehub.api.ErrorResponse;
-import ru.practicum.moviehub.http.BaseHttpHandler;
 import ru.practicum.moviehub.model.Movie;
 import ru.practicum.moviehub.store.MoviesStore;
 
@@ -18,8 +17,7 @@ import java.util.Optional;
 
 public class MoviesHandler extends BaseHttpHandler {
 
-    private MoviesStore moviesStore;
-    private Gson gson = new Gson();
+    private final MoviesStore moviesStore;
     private static final int INDEX_PARAM = 2;
     private static final Integer MIN_YEAR = 1888;
     private static final Integer MAX_YEAR = LocalDate.now().getYear() + 1;
@@ -43,10 +41,12 @@ public class MoviesHandler extends BaseHttpHandler {
                     deleteMethod(ex);
                     break;
                 default:
-                    sendError(ex, "Метод не поддерживается", 405);
+                    ErrorResponse errorResponse = new ErrorResponse("Метод не поддерживается");
+                    sendError(ex, errorResponse, 405);
             }
         } catch (Error error) {
-            sendError(ex, "Ошибка", 500);
+            ErrorResponse errorResponse = new ErrorResponse("Ошибка");
+            sendError(ex, errorResponse, 500);
         }
     }
 
@@ -58,14 +58,11 @@ public class MoviesHandler extends BaseHttpHandler {
             if (optMovie.isPresent()) {
                 sendJson(ex, 200, gson.toJson(optMovie.get()));
             } else {
-                sendError(ex, "Фильм не найден", 404);
+                ErrorResponse errorResponse = new ErrorResponse("Фильм не найден");
+                sendError(ex, errorResponse, 404);
             }
         } else if (filter > 0) {
-            List<Movie> movies = moviesStore.getAllMovies()
-                    .stream()
-                    .filter(movie -> movie.getYear().equals(filter))
-                    .toList();
-            sendJson(ex, 200, gson.toJson(movies));
+           sendJson(ex, 200, gson.toJson(moviesStore.getFilteredMovies(filter)));
         } else {
             sendJson(ex, 200, gson.toJson(moviesStore.getAllMovies()));
         }
@@ -80,12 +77,14 @@ public class MoviesHandler extends BaseHttpHandler {
         List<String> contentTypeValues = requestHeaders.get("Content-type");
         if ((contentTypeValues == null) || ((!contentTypeValues.contains("application/json")) &&
                 (!contentTypeValues.contains("application/json; charset=UTF-8")))) {
-            sendError(ex, "Сервер принимает данные только в формате json", 415);
+            ErrorResponse errorResponse = new ErrorResponse("Сервер принимает данные только в формате json");
+            sendError(ex, errorResponse, 415);
             return;
         }
 
         if (jsonString.isBlank()) {
-            sendError(ex, "Тело запроса не должно быть пустым", 400);
+            ErrorResponse errorResponse = new ErrorResponse("Тело запроса не должно быть пустым");
+            sendError(ex, errorResponse, 400);
             return;
         }
 
@@ -113,23 +112,20 @@ public class MoviesHandler extends BaseHttpHandler {
                     Movie movie = moviesStore.addMovie(movieFromRequest.getTitle(), movieFromRequest.getYear());
                     sendJson(ex, 201, gson.toJson(movie));
                 } else {
-                    sendErrorPost(ex, "Ошибка валидации", details, 422);
+                    ErrorResponse errorResponse = new ErrorResponse("Ошибка валидации", details);
+                    sendError(ex, errorResponse, 422);
                 }
             } else {
-                sendError(ex, "Некорректный запрос", 400);
+                ErrorResponse errorResponse = new ErrorResponse("Некорректный запрос");
+                sendError(ex, errorResponse, 400);
             }
         } catch (JsonSyntaxException e) {
-            sendError(ex, "Неверный формат JSON", 400);
+            ErrorResponse errorResponse = new ErrorResponse("Неверный формат JSON");
+            sendError(ex, errorResponse, 400);
         }
     }
 
-    private void sendErrorPost(HttpExchange ex, String error, List<String> details, int code) throws IOException {
-        ErrorResponse errorResponse = new ErrorResponse(error, details);
-        sendJson(ex, code, gson.toJson(errorResponse));
-    }
-
-    private void sendError(HttpExchange ex, String error, int code) throws IOException {
-        ErrorResponse errorResponse = new ErrorResponse(error);
+    private void sendError(HttpExchange ex, ErrorResponse errorResponse, int code) throws IOException {
         sendJson(ex, code, gson.toJson(errorResponse));
     }
 
@@ -142,7 +138,8 @@ public class MoviesHandler extends BaseHttpHandler {
             try {
                 param = Integer.parseInt(splitString[INDEX_PARAM]);
             } catch (NumberFormatException e) {
-                sendError(ex, "Некорректный ID", 400);
+                ErrorResponse errorResponse = new ErrorResponse("Некорректный ID");
+                sendError(ex, errorResponse, 400);
             }
         }
         return param;
@@ -157,10 +154,12 @@ public class MoviesHandler extends BaseHttpHandler {
             try {
                 valueFilter = Integer.parseInt(filter.substring(index));
                 if (valueFilter < MIN_YEAR || valueFilter > MAX_YEAR) {
-                    sendError(ex, "Некорректный параметр запроса — 'year'", 400);
+                    ErrorResponse errorResponse = new ErrorResponse("Некорректный параметр запроса — 'year'");
+                    sendError(ex, errorResponse, 400);
                 }
             } catch (NumberFormatException e) {
-                sendError(ex, "Некорректный параметр запроса — 'year'", 400);
+                ErrorResponse errorResponse = new ErrorResponse("Некорректный параметр запроса — 'year'");
+                sendError(ex, errorResponse, 400);
             }
         }
         return valueFilter;
@@ -172,10 +171,12 @@ public class MoviesHandler extends BaseHttpHandler {
             if (moviesStore.deleteMovie(param)) {
                 sendNoContent(ex);
             } else {
-                sendError(ex, "Фильм не найден", 404);
+                ErrorResponse errorResponse = new ErrorResponse("Фильм не найден");
+                sendError(ex, errorResponse, 404);
             }
         } else {
-            sendError(ex, "Не указан ID", 400);
+            ErrorResponse errorResponse = new ErrorResponse("Не указан ID");
+            sendError(ex, errorResponse, 400);
         }
     }
 }

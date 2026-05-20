@@ -22,7 +22,7 @@ public class MoviesApiTest {
     private static final String BASE = "http://localhost:8080";
     private static MoviesServer server;
     private static HttpClient client;
-    private static MoviesStore moviesStore = new MoviesStore();
+    private static final MoviesStore moviesStore = new MoviesStore();
 
     @BeforeAll
     static void beforeAll() {

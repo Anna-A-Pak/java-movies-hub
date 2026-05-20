@@ -5,7 +5,7 @@ import ru.practicum.moviehub.model.Movie;
 import java.util.*;
 
 public class MoviesStore {
-    private Map<Integer, Movie> movies = new HashMap<>();
+    private final Map<Integer, Movie> movies = new HashMap<>();
     int idMovie = 0;
 
     public Movie addMovie(String title, int year) {
@@ -24,6 +24,14 @@ public class MoviesStore {
         } else {
             return Optional.empty();
         }
+    }
+
+    public List<Movie> getFilteredMovies(Integer year) {
+         return movies
+                 .values()
+                 .stream()
+                .filter(movie -> movie.getYear().equals(year))
+                .toList();
     }
 
     public boolean deleteMovie(int id) {
