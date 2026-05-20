@@ -124,12 +124,12 @@ public class MoviesHandler extends BaseHttpHandler {
     }
 
     private void sendErrorPost(HttpExchange ex, String error, List<String> details, int code) throws IOException {
-        ErrorResponse errorResponse= new ErrorResponse(error, details);
+        ErrorResponse errorResponse = new ErrorResponse(error, details);
         sendJson(ex, code, gson.toJson(errorResponse));
     }
 
     private void sendError(HttpExchange ex, String error, int code) throws IOException {
-        ErrorResponse errorResponse= new ErrorResponse(error);
+        ErrorResponse errorResponse = new ErrorResponse(error);
         sendJson(ex, code, gson.toJson(errorResponse));
     }
 
