@@ -8,7 +8,7 @@ public class MoviesStore {
     private Map<Integer, Movie> movies = new HashMap<>();
     int idMovie = 0;
 
-    public Movie addMovie (String title, int year) {
+    public Movie addMovie(String title, int year) {
         idMovie++;
         movies.put(idMovie, new Movie(idMovie, title, year));
         return movies.get(idMovie);
